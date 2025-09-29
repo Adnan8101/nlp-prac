@@ -1,0 +1,672 @@
+
+-------------------------------------------------------------------------------------------------------------------------------
+EXPERIMENT 1 : Word Analysis of Text Data (Sentiment Categorization)
+-------------------------------------------------------------------------------------------------------------------------------
+
+.........................
+Theory
+.........................
+
+Word Analysis of Text Data (Sentiment Categorization)
+Sentiment analysis is a Natural Language Processing (NLP) technique used to determine whether a given piece of text expresses a positive, negative, or neutral opinion. It is widely applied to product reviews, movie reviews, and social media comments to understand people’s opinions and emotions.
+
+The process begins with text preprocessing, where the raw text is cleaned by converting it into lowercase, removing punctuation marks, and filtering out common stopwords (such as “the”, “is”, “and”) that do not carry meaningful information. This step reduces noise in the data and ensures better accuracy during analysis.
+
+Next, the cleaned text is analyzed using a sentiment scoring method. In this project, the TextBlob library is used, which calculates the polarity of a sentence. Polarity ranges from –1 to +1, where values greater than 0 indicate positive sentiment, values less than 0 indicate negative sentiment, and values equal to 0 indicate neutral sentiment. Based on this score, a new feature column called sentiment_label is created for each review.
+
+Finally, the results are visualized for better understanding. A bar chart shows the distribution of positive, negative, and neutral reviews. A word cloud is generated for each sentiment, highlighting the most frequent words associated with that category. Additionally, the average sentence length for each sentiment is compared to observe whether positive or negative reviews tend to be longer or shorter.
+
+This experiment demonstrates how text data can be systematically processed and analyzed to extract meaningful insights. It shows the importance of combining NLP techniques with data visualization to effectively interpret and present opinions hidden within textual datasets.
+
+
+
+# --- Import Libraries ---
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import re
+import nltk
+from nltk.corpus import stopwords
+from textblob import TextBlob
+from wordcloud import WordCloud
+
+# Download stopwords (only first time)
+nltk.download('stopwords')
+
+# --- Part A: Implementation ---
+
+# 1. Load Dataset (replace 'your_dataset.csv' with your file name)
+# Make sure your CSV has a column named 'review'
+df = pd.read_csv("your_dataset.csv")
+
+# 2. Preprocess text
+stop_words = set(stopwords.words("english"))
+
+def preprocess_text(text):
+    text = str(text).lower()                          # Lowercase
+    text = re.sub(r'[^\w\s]', '', text)               # Remove punctuation
+    text = " ".join([w for w in text.split() if w not in stop_words])  # Remove stopwords
+    return text
+
+df["clean_review"] = df["review"].apply(preprocess_text)
+
+# 3. Create sentiment labels using TextBlob
+def get_sentiment(text):
+    polarity = TextBlob(text).sentiment.polarity
+    if polarity > 0:
+        return "positive"
+    elif polarity < 0:
+        return "negative"
+    else:
+        return "neutral"
+
+df["sentiment_label"] = df["clean_review"].apply(get_sentiment)
+
+print("Sample data with sentiment labels:")
+print(df.head())
+
+# --- Part B: Visualization ---
+
+# 1. Sentiment distribution (bar chart)
+df["sentiment_label"].value_counts().plot(kind="bar", color=["green","red","blue"])
+plt.title("Sentiment Distribution")
+plt.xlabel("Sentiment")
+plt.ylabel("Count")
+plt.show()
+
+# 2. Word Cloud for each sentiment
+from wordcloud import WordCloud
+for sentiment in df["sentiment_label"].unique():
+    text = " ".join(df[df["sentiment_label"] == sentiment]["clean_review"])
+    wordcloud = WordCloud(width=600, height=300, background_color="white").generate(text)
+    plt.imshow(wordcloud, interpolation="bilinear")
+    plt.axis("off")
+    plt.title(f"Word Cloud - {sentiment}")
+    plt.show()
+
+# 3. Average sentence length by sentiment
+df.groupby("sentiment_label")["sentence_length"].mean().plot(kind="bar", color=["green","red","blue"])
+plt.title("Average Sentence Length by Sentiment")
+plt.xlabel("Sentiment")
+plt.ylabel("Avg Length")
+plt.show()
+
+
+-------------------------------------------------------------------------------------------------------------------------------
+EXPERIMENT 2 : Text Preprocessing Techniques (Tokenization, Filtration & Script Validation)
+-------------------------------------------------------------------------------------------------------------------------------
+
+.........................
+Theory
+.........................
+
+Text Preprocessing is an essential step in Natural Language Processing (NLP) to prepare raw text data for analysis. Since real-world text often contains punctuation, numbers, stopwords, and even non-English symbols, preprocessing helps convert noisy text into a cleaner and more meaningful form.
+
+The first step is tokenization, which breaks sentences into smaller units called tokens (usually words). After tokenization, filtration is applied to remove punctuation, numbers, stopwords, and special characters that do not contribute to meaning. This reduces data size and improves analysis efficiency.
+
+Another important step is script validation, where tokens are checked to identify whether they are valid English words or non-English items such as emojis, symbols, or text in other languages. This ensures that only meaningful words are retained for further analysis.
+
+Finally, the results are visualized to gain insights. A bar chart of the top 10 most frequent tokens shows the most common words in the dataset. A comparison of review length before and after cleaning highlights how preprocessing reduces text size by removing unnecessary content. Additionally, a pie chart of English vs Non-English tokens gives an idea of language distribution in the dataset.
+
+This experiment demonstrates how preprocessing transforms raw, unstructured text into a clean dataset that can be effectively used for sentiment analysis, classification, or other NLP tasks.
+
+
+import pandas as pd
+import re
+import nltk
+from nltk.corpus import stopwords
+from collections import Counter
+import matplotlib.pyplot as plt
+
+nltk.download('stopwords')
+stop_words = set(stopwords.words('english'))
+
+# Load dataset (CSV with 'review' column)
+df = pd.read_csv("amazon_reviews.csv")
+
+# Tokenization + Cleaning
+def clean_tokens(text):
+    tokens = re.findall(r'\b\w+\b', str(text).lower())       # word-level tokens
+    tokens = [t for t in tokens if t.isalpha()]              # remove numbers
+    tokens = [t for t in tokens if t not in stop_words]      # remove stopwords
+    return tokens
+
+df["tokens"] = df["review"].apply(clean_tokens)
+
+# Script validation: English vs Non-English
+def check_script(tokens):
+    eng = [t for t in tokens if t.isascii()]
+    non_eng = [t for t in tokens if not t.isascii()]
+    return len(eng), len(non_eng)
+
+df["eng_noneng"] = df["tokens"].apply(check_script)
+
+# --- Visualization ---
+
+# 1. Top 10 frequent tokens
+all_tokens = [t for tokens in df["tokens"] for t in tokens]
+freq = Counter(all_tokens).most_common(10)
+plt.bar([w for w,c in freq], [c for w,c in freq])
+plt.title("Top 10 Frequent Tokens")
+plt.show()
+
+# 2. Review length before vs after cleaning
+df["before_len"] = df["review"].apply(lambda x: len(str(x).split()))
+df["after_len"] = df["tokens"].apply(len)
+df[["before_len","after_len"]].mean().plot(kind="bar", color=["red","green"])
+plt.title("Avg Review Length Before vs After Cleaning")
+plt.show()
+
+
+OR
+
+# Review length before cleaning
+before_lengths = []
+for text in df["review"]:
+    words = str(text).split()
+    before_lengths.append(len(words))
+df["before_len"] = before_lengths
+
+# Review length after cleaning
+after_lengths = []
+for tokens in df["tokens"]:
+    after_lengths.append(len(tokens))
+df["after_len"] = after_lengths
+
+# Bar chart comparison
+plt.bar(["Before Cleaning", "After Cleaning"],
+        [df["before_len"].mean(), df["after_len"].mean()],
+        color=["red","green"])
+plt.title("Review Length Comparison")
+plt.show()
+
+
+# 3. English vs Non-English tokens percentage
+eng_total = sum(e for e,n in df["eng_noneng"])
+noneng_total = sum(n for e,n in df["eng_noneng"])
+plt.pie([eng_total, noneng_total], labels=["English","Non-English"], autopct="%1.1f%%")
+plt.title("English vs Non-English Tokens")
+plt.show()
+
+
+
+
+
+-------------------------------------------------------------------------------------------------------------------------------
+EXPERIMENT 3 : Smoothing Techniques on N-gram Models (Laplace & Lidstone)
+-------------------------------------------------------------------------------------------------------------------------------
+
+.........................
+Theory
+.........................
+
+N-gram language models are probabilistic models that predict the next word in a sequence based on the previous n-1 words.
+
+A unigram model uses only individual word frequencies.
+
+A bigram model considers pairs of consecutive words and estimates conditional probabilities like P(word₂ | word₁).
+
+One problem with N-gram models is the zero probability issue — if a word or bigram never appears in the training data, its probability becomes zero. To solve this, smoothing techniques are used.
+
+Laplace smoothing (add-one smoothing) adds 1 to all word counts before calculating probabilities. This ensures that no probability is ever zero, but it can overestimate unseen words.
+
+Lidstone smoothing is a generalization of Laplace smoothing where instead of adding 1, we add a smaller value λ (for example, 0.1). This distributes probability mass more smoothly across unseen events without heavily distorting frequent words.
+
+In this experiment, unigram and bigram probability models are built. Then, Laplace smoothing and Lidstone smoothing are applied to handle zero probabilities and improve the robustness of the language model. These techniques are essential for applications like text prediction, machine translation, and speech recognition.
+
+
+import pandas as pd
+import nltk
+from nltk.util import ngrams
+from collections import Counter
+
+# --- Load Dataset ---
+# Replace 'your_dataset.csv' with your file, make sure it has 'review' column
+df = pd.read_csv("your_dataset.csv")
+text = " ".join(df["review"].astype(str))  # combine all reviews
+tokens = text.lower().split()              # tokenize
+
+# --- Unigram Model ---
+unigrams = Counter(tokens)
+total_unigrams = sum(unigrams.values())
+
+print("Sample Unigram Probabilities (no smoothing):")
+for word in list(unigrams)[:5]:   # show only first 5 for simplicity
+    prob = unigrams[word] / total_unigrams
+    print(f"P({word}) = {prob:.3f}")
+
+# --- Bigram Model ---
+bigrams = list(ngrams(tokens, 2))
+bigram_counts = Counter(bigrams)
+
+print("\nSample Bigram Probabilities (no smoothing):")
+for bg in list(bigram_counts)[:5]:   # show only first 5 for simplicity
+    prev_word = bg[0]
+    prob = bigram_counts[bg] / unigrams[prev_word]
+    print(f"P({bg[1]} | {bg[0]}) = {prob:.3f}")
+
+# --- Laplace Smoothing ---
+V = len(unigrams)  # vocabulary size
+print("\nSample Bigram Probabilities with Laplace Smoothing:")
+for bg in list(bigram_counts)[:5]:
+    prev_word = bg[0]
+    prob = (bigram_counts[bg] + 1) / (unigrams[prev_word] + V)
+    print(f"P({bg[1]} | {bg[0]}) = {prob:.3f}")
+
+# --- Lidstone Smoothing (λ = 0.1) ---
+lam = 0.1
+print("\nSample Bigram Probabilities with Lidstone Smoothing (λ=0.1):")
+for bg in list(bigram_counts)[:5]:
+    prev_word = bg[0]
+    prob = (bigram_counts[bg] + lam) / (unigrams[prev_word] + lam * V)
+    print(f"P({bg[1]} | {bg[0]}) = {prob:.3f}")
+
+
+
+-------------------------------------------------------------------------------------------------------------------------------
+EXPERIMENT 4 : Smoothing Techniques on N-gram Models (Good-Turing)
+-------------------------------------------------------------------------------------------------------------------------------
+
+.........................
+Theory
+.........................
+
+N-gram language models are probabilistic models used in Natural Language Processing (NLP) to predict the next word in a sequence based on the previous n-1 words. A unigram model considers only individual word frequencies, while a bigram model considers pairs of consecutive words to estimate conditional probabilities, such as P(word₂ | word₁).
+
+A common issue in N-gram models is the zero probability problem, where unseen words or bigrams in the training data get a probability of zero. This can severely affect the performance of the language model, especially when calculating perplexity or making predictions. Smoothing techniques adjust the probabilities of unseen or rare events to avoid zero probability and make the model more robust.
+
+Good-Turing smoothing is one such technique. It estimates the probability of unseen events by redistributing some probability mass from seen events. The counts of observed N-grams are adjusted based on the number of N-grams that appear once, twice, and so on. This helps assign a small but non-zero probability to unseen bigrams.
+
+Perplexity is a metric used to evaluate language models. It measures how well a probability model predicts a set of test data. Lower perplexity indicates a better model, meaning it is more confident in predicting the next word in a sequence.
+
+In this experiment, unigram and bigram models are built from the dataset. Good-Turing smoothing is applied to the bigram model to handle zero-probability issues. The probability distribution of sample bigrams is visualized before and after smoothing, and perplexity scores are compared for each method. This demonstrates how smoothing improves the reliability of N-gram language models in predicting unseen text sequences.
+
+
+import pandas as pd
+import nltk
+from nltk.util import ngrams
+from collections import Counter, defaultdict
+import matplotlib.pyplot as plt
+import math
+
+# --- Load Dataset ---
+df = pd.read_csv("your_dataset.csv")  # CSV with 'review' column
+text = " ".join(df["review"].astype(str)).lower().split()  # tokenize
+
+# --- Build Unigram & Bigram Counts ---
+unigrams = Counter(text)
+bigrams = Counter(ngrams(text, 2))
+V = len(unigrams)  # vocabulary size
+
+# --- Good-Turing Smoothing ---
+def good_turing_counts(counts):
+    freq_of_freq = Counter(counts.values())
+    gt_counts = {}
+    N = sum(counts.values())
+    for k in counts:
+        k_count = counts[k]
+        next_count = freq_of_freq.get(k_count + 1, 0)
+        if next_count == 0:
+            gt_counts[k] = k_count
+        else:
+            gt_counts[k] = (k_count + 1) * next_count / freq_of_freq[k_count]
+    # Convert to probabilities
+    total_gt = sum(gt_counts.values())
+    gt_probs = {k: v/total_gt for k,v in gt_counts.items()}
+    return gt_probs
+
+bigram_gt_probs = good_turing_counts(bigrams)
+
+# --- Perplexity Function ---
+def perplexity(prob_dict, test_tokens):
+    test_bigrams = list(ngrams(test_tokens, 2))
+    log_prob = 0
+    N = len(test_bigrams)
+    for bg in test_bigrams:
+        prob = prob_dict.get(bg, 1e-6)  # small prob for unseen bigrams
+        log_prob += math.log(prob)
+    return math.exp(-log_prob / N)
+
+# Example test data (split dataset or small test sample)
+test_text = "I love machine learning and NLP".lower().split()
+
+# Perplexity scores
+pp_gt = perplexity(bigram_gt_probs, test_text)
+print("Perplexity with Good-Turing Smoothing:", pp_gt)
+
+# --- Visualization ---
+
+# 1. Probability distribution of sample bigrams (first 10 bigrams)
+sample_bigrams = list(bigrams)[:10]
+prob_before = [bigrams[bg]/unigrams[bg[0]] for bg in sample_bigrams]
+prob_after = [bigram_gt_probs[bg] if bg in bigram_gt_probs else 0 for bg in sample_bigrams]
+
+plt.plot(range(10), prob_before, marker='o', label='Before Smoothing')
+plt.plot(range(10), prob_after, marker='o', label='Good-Turing')
+plt.xticks(range(10), [f"{bg[0]} {bg[1]}" for bg in sample_bigrams], rotation=45)
+plt.ylabel("Probability")
+plt.title("Sample Bigram Probability Distribution")
+plt.legend()
+plt.show()
+
+# 2. Perplexity comparison (example)
+methods = ["No Smoothing", "Good-Turing"]
+perplexities = [perplexity({bg: bigrams[bg]/unigrams[bg[0]] for bg in bigrams}, test_text),
+                pp_gt]
+
+plt.plot(methods, perplexities, marker='o')
+plt.ylabel("Perplexity")
+plt.title("Perplexity Comparison")
+plt.show()
+
+
+
+-------------------------------------------------------------------------------------------------------------------------------
+EXPERIMENT 5 : NLP Pipeline for Sentiment Classification (Preprocessing & Feature Engineering)
+-------------------------------------------------------------------------------------------------------------------------------
+
+.........................
+Theory
+.........................
+
+Theory: NLP Pipeline for Sentiment Classification
+Natural Language Processing (NLP) is a field of artificial intelligence that deals with understanding, analyzing, and processing human language. In this practical, an NLP pipeline is built to classify customer feedback into Positive, Negative, or Neutral sentiment.
+
+The first step is to load the dataset, which contains customer IDs, feedback text, and the sentiment label for each feedback. The dataset is then cleaned through data preprocessing, which ensures that the text is consistent and free from noise. Preprocessing steps include:
+
+Lowercasing all text to standardize word forms,
+
+Removing punctuation, numbers, and special characters to focus on meaningful words,
+
+Tokenization, which splits sentences into individual words,
+
+Stopword removal to eliminate common words like “the”, “is”, and “and” that do not carry sentiment information, and
+
+Lemmatization, which reduces words to their base form (e.g., “running” → “run”) to unify variations of the same word.
+
+After preprocessing, the text is transformed into a numerical representation through feature engineering, using either Bag of Words (BoW) or TF-IDF (Term Frequency–Inverse Document Frequency). BoW creates a matrix counting the occurrence of each word in the feedback, while TF-IDF assigns weights to words based on their importance, reducing the impact of commonly occurring words. These numerical features can then be used to train machine learning models for sentiment classification.
+
+This pipeline demonstrates how raw text data can be systematically processed and converted into a format suitable for predictive modeling, enabling the automatic classification of customer feedback based on sentiment.
+
+
+
+# --- Import Libraries ---
+import pandas as pd
+import re
+import nltk
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+
+# Download necessary NLTK resources
+nltk.download('stopwords')
+nltk.download('wordnet')
+nltk.download('omw-1.4')
+
+# --- 1. Load Dataset ---
+df = pd.read_csv("Customer_Feedback_500.csv")  # Columns: Customer_ID, Feedback_Text, Sentiment
+print("Sample Data:")
+print(df.head())
+
+# --- 2. Data Preprocessing ---
+stop_words = set(stopwords.words('english'))
+lemmatizer = WordNetLemmatizer()
+
+def preprocess_text(text):
+    text = str(text).lower()                     # lowercase
+    text = re.sub(r'[^a-z\s]', '', text)         # remove punctuation, numbers, special chars
+    tokens = text.split()                         # simple tokenization
+    tokens = [w for w in tokens if w not in stop_words]  # remove stopwords
+    tokens = [lemmatizer.lemmatize(w) for w in tokens]   # lemmatization
+    return " ".join(tokens)
+
+df["clean_feedback"] = df["Feedback_Text"].apply(preprocess_text)
+print("\nSample Cleaned Feedback:")
+print(df[["Feedback_Text", "clean_feedback"]].head())
+
+# --- 3. Feature Engineering ---
+# Option 1: Bag of Words
+bow_vectorizer = CountVectorizer()
+X_bow = bow_vectorizer.fit_transform(df["clean_feedback"])
+print("\nBoW Feature Shape:", X_bow.shape)
+
+# Option 2: TF-IDF
+tfidf_vectorizer = TfidfVectorizer()
+X_tfidf = tfidf_vectorizer.fit_transform(df["clean_feedback"])
+print("TF-IDF Feature Shape:", X_tfidf.shape)
+
+# Target labels
+y = df["Sentiment"]
+
+
+-------------------------------------------------------------------------------------------------------------------------------
+EXPERIMENT 6 : NLP Pipeline for Sentiment Classification (Model Building & Evaluation)
+-------------------------------------------------------------------------------------------------------------------------------
+
+.........................
+Theory
+.........................
+
+# --- Import Libraries ---
+import pandas as pd
+import re
+import nltk
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Download necessary NLTK data
+nltk.download('stopwords')
+nltk.download('wordnet')
+nltk.download('omw-1.4')
+
+# --- 1. Load Dataset ---
+df = pd.read_csv("Customer_Feedback_500.csv")  # Columns: Customer_ID, Feedback_Text, Sentiment
+
+# --- 2. Data Preprocessing ---
+stop_words = set(stopwords.words('english'))
+lemmatizer = WordNetLemmatizer()
+
+def preprocess_text(text):
+    text = str(text).lower()                     # lowercase
+    text = re.sub(r'[^a-z\s]', '', text)         # remove punctuation/numbers/special chars
+    tokens = text.split()                         # tokenize
+    tokens = [w for w in tokens if w not in stop_words]  # remove stopwords
+    tokens = [lemmatizer.lemmatize(w) for w in tokens]   # lemmatization
+    return " ".join(tokens)
+
+df["clean_feedback"] = df["Feedback_Text"].apply(preprocess_text)
+
+# --- 3. Feature Engineering ---
+vectorizer = CountVectorizer()                   # Bag of Words
+X = vectorizer.fit_transform(df["clean_feedback"])
+y = df["Sentiment"]
+
+# --- 4. Train-Test Split ---
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# --- 5. Model Building ---
+model = MultinomialNB()                          # Using Naive Bayes for simplicity
+model.fit(X_train, y_train)
+
+# --- 6. Predictions ---
+y_pred = model.predict(X_test)
+
+# --- 7. Model Evaluation ---
+
+# Accuracy
+acc = accuracy_score(y_test, y_pred)
+print("Accuracy:", round(acc, 3))
+
+# Confusion Matrix (simpler plot)
+cm = confusion_matrix(y_test, y_pred)
+plt.matshow(cm, cmap='Blues')
+plt.title("Confusion Matrix")
+plt.colorbar()
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.show()
+
+# Precision, Recall, F1-score
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+
+
+-------------------------------------------------------------------------------------------------------------------------------
+EXPERIMENT 7 : Chunking
+-------------------------------------------------------------------------------------------------------------------------------
+
+.........................
+Theory
+.........................
+
+
+# --- Import Libraries ---
+import nltk
+from nltk import word_tokenize, pos_tag, RegexpParser, sent_tokenize
+nltk.download('punkt')
+nltk.download('averaged_perceptron_tagger')
+
+# --- Sample Text / Dataset ---
+text = """Natural Language Processing is a branch of AI. It allows computers to understand human language."""
+
+# --- Tokenization ---
+tokens = word_tokenize(text)
+print("Tokens:", tokens)
+
+# --- 1. Fixed-size chunks (size=3 words) ---
+fixed_chunks = [tokens[i:i+3] for i in range(0, len(tokens), 3)]
+print("\nFixed-size Chunks:", fixed_chunks)
+
+# --- 2. Sliding window chunks (size=3, step=1) ---
+sliding_chunks = [tokens[i:i+3] for i in range(len(tokens)-2)]
+print("\nSliding Window Chunks:", sliding_chunks)
+
+# --- 3. Sentence/Punctuation-based chunks ---
+sentences = sent_tokenize(text)
+print("\nSentence-based Chunks:", sentences)
+
+# --- 4. POS Tagging ---
+pos_tags = pos_tag(tokens)
+print("\nPOS Tags:", pos_tags)
+
+# --- 5. Chunking: Noun Phrases (NP) and Verb Phrases (VP) ---
+grammar = r"""
+  NP: {<DT>?<JJ>*<NN.*>+}      # Noun Phrase: optional determiner + adjectives + nouns
+  VP: {<VB.*><NP|PP|CLAUSE>+$} # Verb Phrase: verb + NP or PP
+"""
+
+chunk_parser = RegexpParser(grammar)
+tree = chunk_parser.parse(pos_tags)
+print("\nChunked Tree:")
+print(tree)
+
+# --- 6. Extract Noun Phrases and Verb Phrases ---
+noun_phrases = []
+verb_phrases = []
+
+for subtree in tree.subtrees():
+    if subtree.label() == 'NP':
+        noun_phrases.append(" ".join(word for word, tag in subtree.leaves()))
+    elif subtree.label() == 'VP':
+        verb_phrases.append(" ".join(word for word, tag in subtree.leaves()))
+
+print("\nNoun Phrases:", noun_phrases)
+print("Verb Phrases:", verb_phrases)
+
+
+
+
+-------------------------------------------------------------------------------------------------------------------------------
+EXPERIMENT 8 : Parsing & Named Entity Recognition (NER)
+-------------------------------------------------------------------------------------------------------------------------------
+
+.........................
+Theory
+.........................
+
+# --- Import Libraries ---
+import nltk
+from nltk import CFG, pos_tag, word_tokenize, ne_chunk
+from nltk.tree import Tree
+import matplotlib.pyplot as plt
+from collections import Counter
+nltk.download('punkt')
+nltk.download('averaged_perceptron_tagger')
+nltk.download('maxent_ne_chunker')
+nltk.download('words')
+
+# --- Sample Text / Dataset ---
+text = "John gave feedback on the course at AI University on 10th September 2025."
+
+# --- Tokenization and POS Tagging ---
+tokens = word_tokenize(text)
+pos_tags = pos_tag(tokens)
+
+# --- 1. Named Entity Recognition (NER) ---
+ner_tree = ne_chunk(pos_tags)
+print("NER Tree:")
+print(ner_tree)
+
+# --- Extract Entities and Categories ---
+entities = []
+for subtree in ner_tree:
+    if isinstance(subtree, Tree):
+        entity_name = " ".join([token for token, pos in subtree.leaves()])
+        entity_type = subtree.label()
+        entities.append((entity_name, entity_type))
+
+print("\nExtracted Entities:")
+print(entities)
+
+# --- Part B: Visualization ---
+
+# 1. Entity Frequency Distribution
+entity_types = [etype for _, etype in entities]
+freq = Counter(entity_types)
+plt.bar(freq.keys(), freq.values(), color='skyblue')
+plt.title("NER Entity Frequency")
+plt.ylabel("Count")
+plt.show()
+
+# 2. Highlight entities in text (simple colored tags)
+highlighted_text = text
+for entity, etype in entities:
+    highlighted_text = highlighted_text.replace(entity, f"[{entity}:{etype}]")
+
+print("\nHighlighted Text:")
+print(highlighted_text)
+
+# --- 3. Knowledge Graph (simple links using entities) ---
+# For simplicity, connect entities appearing in same sentence
+edges = []
+for i in range(len(entities)-1):
+    edges.append((entities[i][0], entities[i+1][0]))
+
+print("\nKnowledge Graph Edges:")
+print(edges)
+
+# --- 4. CFG Parsing ---
+grammar = CFG.fromstring("""
+S -> NP VP
+VP -> V NP | V NP PP | V
+PP -> P NP
+NP -> Det N | Det N PP | 'I' | N
+Det -> 'the' | 'a' | 'my'
+N -> 'course' | 'students' | 'feedback' | 'service' | 'experience'
+V -> 'is' | 'was' | 'like' | 'learn'
+P -> 'at' | 'for' | 'in'
+""")
+
+parser = nltk.ChartParser(grammar)
+print("\nCFG Parse Trees:")
+for tree in parser.parse(word_tokenize("I gave feedback on the course")):
+    print(tree)
+    tree.draw()  # Optional: opens a tree window
+
