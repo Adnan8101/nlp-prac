@@ -37,7 +37,7 @@ nltk.download('stopwords')
 
 # 1. Load Dataset (replace 'your_dataset.csv' with your file name)
 # Make sure your CSV has a column named 'review'
-df = pd.read_csv("your_dataset.csv")
+df = pd.read_csv("your_dataset.csv",on_bad_lines='skip')
 
 # 2. Preprocess text
 stop_words = set(stopwords.words("english"))
@@ -447,6 +447,17 @@ EXPERIMENT 6 : NLP Pipeline for Sentiment Classification (Model Building & Evalu
 Theory
 .........................
 
+Machine Learning for Sentiment Classification
+After preprocessing text data and converting it into numerical features, the next step is to build and evaluate machine learning models for sentiment classification. This experiment focuses on the complete machine learning pipeline from model training to performance evaluation.
+
+The process begins with splitting the dataset into training and testing sets. The training set (typically 70% of the data) is used to train the machine learning model, while the testing set (30% of the data) is used to evaluate the model's performance on unseen data. This split ensures that the model's performance is measured on data it has never seen during training, providing a realistic assessment of its generalization ability.
+
+For sentiment classification, various machine learning algorithms can be used, including Logistic Regression, Naive Bayes, and Support Vector Machines (SVM). In this experiment, Multinomial Naive Bayes is chosen for its effectiveness with text data. Naive Bayes works well with text classification because it assumes independence between features (words), which is a reasonable approximation for many text classification tasks.
+
+Model evaluation is crucial to understand how well the classifier performs. Several metrics are used: Accuracy measures the overall correctness of predictions; Precision indicates the proportion of positive predictions that were actually correct; Recall measures the proportion of actual positive cases that were correctly identified; and F1-score provides a balanced measure between precision and recall. The confusion matrix provides a detailed breakdown of correct and incorrect predictions for each class.
+
+This experiment demonstrates the complete machine learning workflow for text classification, showing how preprocessed text data can be transformed into actionable insights through predictive modeling and comprehensive evaluation metrics.
+
 # --- Import Libraries ---
 import pandas as pd
 import re
@@ -526,6 +537,16 @@ EXPERIMENT 7 : Chunking
 Theory
 .........................
 
+Text Chunking and Phrase Extraction
+Chunking is a fundamental technique in Natural Language Processing (NLP) that involves grouping words or tokens into meaningful phrases or segments. Unlike full parsing, which creates complete syntactic trees, chunking focuses on identifying specific types of phrases such as noun phrases (NPs) and verb phrases (VPs). This makes chunking computationally more efficient while still capturing important linguistic structures.
+
+There are several approaches to chunking text data. Fixed-size chunking divides text into segments of predetermined length, which is useful for processing large texts in manageable pieces. Sliding window chunking creates overlapping segments by moving a window of fixed size across the text, ensuring that no important information is lost at boundaries. Sentence-based or punctuation-based chunking uses natural language boundaries like periods, exclamation marks, and question marks to create meaningful segments.
+
+The most sophisticated approach is grammatical chunking, which uses Part-of-Speech (POS) tagging combined with regular expression patterns to identify syntactic phrases. After tokenizing the text and assigning POS tags to each word, pattern-based rules are applied to group words into phrases. For example, a noun phrase pattern might be "optional determiner + optional adjectives + one or more nouns" (DT? JJ* NN+).
+
+Noun phrases typically contain the main subjects and objects in sentences, making them crucial for understanding what the text is about. Verb phrases capture the actions and predicates, providing information about what is happening in the text. By extracting these phrases, we can better understand the semantic content and structure of natural language text.
+
+This experiment demonstrates various chunking strategies and shows how they can be used to extract meaningful linguistic structures from raw text, providing a foundation for more advanced NLP tasks like information extraction and semantic analysis.
 
 # --- Import Libraries ---
 import nltk
@@ -591,7 +612,21 @@ EXPERIMENT 8 : Parsing & Named Entity Recognition (NER)
 Theory
 .........................
 
-# --- Import Libraries ---
+Syntactic Parsing and Named Entity Recognition
+Syntactic parsing and Named Entity Recognition (NER) are advanced NLP techniques that extract structured information from natural language text. These methods go beyond simple word analysis to understand the grammatical structure and identify important entities within the text.
+
+Named Entity Recognition is the process of identifying and classifying named entities in text into predefined categories such as persons, organizations, locations, dates, and other specific types. NER systems use machine learning models trained on large annotated datasets to recognize patterns that indicate the presence of entities. For example, capitalized words following certain patterns might indicate person names, while words preceded by "in" or "at" might indicate locations.
+
+Syntactic parsing involves analyzing the grammatical structure of sentences according to formal grammar rules. Context-Free Grammar (CFG) parsing uses a set of production rules to break down sentences into their constituent parts, creating parse trees that show the hierarchical relationships between words and phrases. These parse trees reveal the syntactic structure of sentences, making it possible to understand the grammatical roles of different words and phrases.
+
+The visualization of extracted information is crucial for understanding the results. Entity frequency distributions show which types of entities appear most often in the text. Highlighted entity tags make it easy to spot important information in the original text. Knowledge graphs can be constructed by linking related entities, creating networks that represent relationships and connections between different pieces of information.
+
+These techniques are fundamental to many advanced NLP applications including information extraction, question answering systems, machine translation, and text summarization. By combining syntactic analysis with entity recognition, systems can extract structured, meaningful information from unstructured text data.
+
+This experiment demonstrates how parsing and NER can be applied to extract both syntactic structures and semantic entities from text, providing a comprehensive understanding of linguistic content for downstream applications.
+
+
+Code: 
 import nltk
 from nltk import CFG, pos_tag, word_tokenize, ne_chunk
 from nltk.tree import Tree
@@ -601,6 +636,8 @@ nltk.download('punkt')
 nltk.download('averaged_perceptron_tagger')
 nltk.download('maxent_ne_chunker')
 nltk.download('words')
+nltk.download('averaged_perceptron_tagger_eng')
+nltk.download('maxent_ne_chunker_tab')
 
 # --- Sample Text / Dataset ---
 text = "John gave feedback on the course at AI University on 10th September 2025."
@@ -660,13 +697,23 @@ PP -> P NP
 NP -> Det N | Det N PP | 'I' | N
 Det -> 'the' | 'a' | 'my'
 N -> 'course' | 'students' | 'feedback' | 'service' | 'experience'
-V -> 'is' | 'was' | 'like' | 'learn'
-P -> 'at' | 'for' | 'in'
+V -> 'is' | 'was' | 'like' | 'learn' | 'gave'
+P -> 'at' | 'for' | 'in' | 'on'
 """)
 
 parser = nltk.ChartParser(grammar)
 print("\nCFG Parse Trees:")
-for tree in parser.parse(word_tokenize("I gave feedback on the course")):
-    print(tree)
-    tree.draw()  # Optional: opens a tree window
+try:
+    for tree in parser.parse(word_tokenize("I gave feedback on the course")):
+        print(tree)
+        tree.draw()  # Optional: opens a tree window
+except ValueError as e:
+    print(f"Grammar parsing error: {e}")
+    print("Using a simpler sentence that matches the grammar...")
+    # Try with a sentence that fits the grammar better
+    simple_sentence = "I learn the course"
+    print(f"Parsing: '{simple_sentence}'")
+    for tree in parser.parse(word_tokenize(simple_sentence)):
+        print(tree)
+        tree.draw()  # Optional: opens a tree window
 
